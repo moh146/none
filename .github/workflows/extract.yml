@@ -1,0 +1,77 @@
+  - name: Verify mta-sa.zip exists
+    run: |
+      if [ ! -f "mta-sa.zip" ]; then
+        echo "mta-sa.zip not found in repository root. Put the zip at the repository root and re-run.";
+        exit 1;
+      fi
+
+  - name: List ZIP contents (for logs)
+    run: unzip -l mta-sa.zip || true
+
+  - name: Extract ZIP to temporary folder
+    run: |
+      rm -rf /tmp/mta_extract
+      mkdir -p /tmp/mta_extract
+      unzip -q mta-sa.zip -d /tmp/mta_extract
+
+  - name: Detect files larger than 100MB inside extracted content
+    id: check_big
+    run: |
+      big=$(find /tmp/mta_extract -type f -size +100M -printf '%P %s\n' 2>/dev/null || true)
+      if [ -n "$big" ]; then
+        echo "big_files<<EOF" >> $GITHUB_OUTPUT
+        echo "$big" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Fail if there are large files (>100MB)
+    if: steps.check_big.outputs.big_files != ''
+    run: |
+      echo "One or more files larger than 100MB were found in the zip (GitHub rejects files >100MB).";
+      echo "Files:";
+      echo "${{ steps.check_big.outputs.big_files }}";
+      exit 1
+
+  - name: Backup .github/workflows
+    run: |
+      mkdir -p /tmp/workflows_backup
+      if [ -d ".github/workflows" ]; then
+        cp -a .github/workflows /tmp/workflows_backup/
+      fi
+
+  - name: Replace repository files with extracted content
+    run: |
+      # Remove everything in the repo root except .git
+      find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} +
+
+      # If the zip extracted a single root folder, copy its contents; otherwise copy all
+      entries=(/tmp/mta_extract/*)
+      if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
+        rootdir="${entries[0]}"
+        cp -a "$rootdir"/* . || true
+        cp -a "$rootdir"/.[!.]* . || true
+      else
+        cp -a /tmp/mta_extract/* . || true
+        cp -a /tmp/mta_extract/.[!.]* . || true
+      fi
+
+      # Restore workflows
+      if [ -d /tmp/workflows_backup/workflows ]; then
+        mkdir -p .github
+        cp -a /tmp/workflows_backup/workflows .github/
+      fi
+
+  - name: Commit & push changes to main
+    env:
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+    run: |
+      git add -A
+      git config user.name "$GIT_AUTHOR_NAME"
+      git config user.email "$GIT_AUTHOR_EMAIL"
+      if git diff --cached --quiet; then
+        echo "No changes to commit.";
+        exit 0;
+      fi
+      git commit -m "Replace repo contents from mta-sa.zip (preserve .github/workflows)"
+      git push origin HEAD:main
