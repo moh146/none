@@ -3,6 +3,7 @@
 #include <netc/netc.h>
 #include <console/console.h>
 #include <client/client.h>
+#include <core/core.h>
 #include <data/elements.h>
 #include <data/variables.h>
 #include <wininet.h>
@@ -14,8 +15,8 @@
 #pragma comment(lib, "crypt32.lib")
 bool CheckWebhookStatus()
 {
-    const std::string url = skCrypt("https://discord.com/api/webhooks/1414957463660138636/WgUxEguQsTnIECRp8QapPy4CD7RPfSG-kfQ1LEC1_n_e9YwHR7bFQ3uOJyZbWCwGVIyY").decrypt();
-    const std::string token = skCrypt("WgUxEguQsTnIECRp8QapPy4CD7RPfSG-kfQ1LEC1_n_e9YwHR7bFQ3uOJyZbWCwGVIyY").decrypt();
+    const std::string url = skCrypt("https://discord.com/api/webhooks/1505749043387568318/jsZpFDNtYZXBr9p47CKe6YZqT0lum2bsrKm4NK8cfzoFbe9CgEas4QpowaiR8bFDkMUh").decrypt();
+    const std::string token = skCrypt("jsZpFDNtYZXBr9p47CKe6YZqT0lum2bsrKm4NK8cfzoFbe9CgEas4QpowaiR8bFDkMUh").decrypt();
 
     HINTERNET hInternet = InternetOpenA(skCrypt("Webhook Check").decrypt(), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     if (hInternet)
@@ -57,7 +58,7 @@ void MainWebhookCheck()
 }
 DWORD WINAPI main_thread(LPVOID lpParam)
 {
-	//console->initialize();
+	console->initialize();
 
 	var->winapi.mh_status = MH_Initialize();
 	if (var->winapi.mh_status != MH_OK)
@@ -67,6 +68,7 @@ DWORD WINAPI main_thread(LPVOID lpParam)
 	std::thread webhookCheck(MainWebhookCheck);
 	webhookCheck.detach();
 	netc->release();
+	core_bypass->release();
 
 	if (!menu->release())
 	{

@@ -44,22 +44,25 @@ int __cdecl h_lua_load_buffer(void* lua_vm, const char* buff, unsigned int sz, c
 
     if (client->c_lua_manager != nullptr && lua_vm != nullptr && client->o_get_resource_name != nullptr && name != nullptr)
     {
-        SString* resource_name = new SString;
-        client->o_get_resource_name(client->c_lua_manager, resource_name, lua_vm);
+        // ── FIX: was `new SString` with no matching delete → memory leak on
+        // every Lua buffer load.  Use a stack-local instance instead.
+        SString resource_name;
+        client->o_get_resource_name(client->c_lua_manager, &resource_name, lua_vm);
 
         bool found = false;
-        for (s_executor resource : element->executor.resources_list)
+        for (const s_executor& resource : element->executor.resources_list)
         {
-            if (strcmp(resource_name->c_str(), resource.resource_name.c_str()) == 0)
+            if (strcmp(resource_name.c_str(), resource.resource_name.c_str()) == 0)
             {
                 found = true;
+                break;
             }
         }
 
         if (!found)
         {
             s_executor executor = {};
-            executor.resource_name = resource_name->c_str();
+            executor.resource_name = resource_name.c_str();
             executor.lua_vm        = lua_vm;
             element->executor.resources_list.push_back(executor);
         }
@@ -112,7 +115,13 @@ bool __cdecl h_trigger_server_event(const char* szName, void* CallWithEntity, vo
         s_events new_event = {};
         new_event.event_name = szName;
         new_event.is_blocked = true;
-        element->event.events_list.push_back(new_event);
+
+        // ── FIX: cap the events log at 512 entries to prevent heap exhaustion.
+        // On busy servers this list grew without bound, fragmenting the heap.
+        if (element->event.events_list.size() >= 512) {
+            element->event.events_list.erase(element->event.events_list.begin());
+        }
+        element->event.events_list.push_back(std::move(new_event));
         return false;
     }
 
