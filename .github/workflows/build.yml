@@ -18,21 +18,10 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install DirectX SDK (June 2010)
+      - name: Set DXSDK_DIR to local sdk folder
         shell: powershell
         run: |
-          $url = "https://download.microsoft.com/download/A/E/7/AE743F1F-632B-4809-87A9-AA1BB3458E31/DXSDK_Jun10.exe"
-          $installer = "$env:TEMP\DXSDK_Jun10.exe"
-          Write-Host "Downloading DirectX SDK..."
-          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Installing DirectX SDK silently..."
-          Start-Process -FilePath $installer -ArgumentList "/U" -Wait -NoNewWindow
-          Write-Host "DirectX SDK installed."
-
-      - name: Set DXSDK_DIR environment variable
-        shell: powershell
-        run: |
-          $dxPath = "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)"
+          $dxPath = "${{ github.workspace }}\sdk"
           echo "DXSDK_DIR=$dxPath\" >> $env:GITHUB_ENV
           Write-Host "DXSDK_DIR set to: $dxPath"
 
@@ -40,11 +29,10 @@ jobs:
         shell: powershell
         run: |
           msbuild "Nebul engine.sln" /p:Configuration=Release /p:Platform=Win32 /m /v:minimal
-        working-directory: mta-sa
 
       - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
           name: Brutalize-DLL
-          path: mta-sa/bin/Brutalize.dll
+          path: bin/Brutalize.dll
           if-no-files-found: error
