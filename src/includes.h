@@ -13,7 +13,17 @@
 #include <vector>
 #include <string>
 #include <d3d9.h>
-#include <d3dx9.h>
+
+#if defined(__has_include)
+#  if __has_include(<d3dx9.h>)
+#    include <d3dx9.h>
+#  else
+#    pragma message("warning: d3dx9.h not found — install Microsoft DirectX SDK (June 2010)")
+#  endif
+#else
+#  include <d3dx9.h>
+#endif
+
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include <fstream>
