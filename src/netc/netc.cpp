@@ -100,7 +100,7 @@ void __fastcall h_disconnect_with_reason(void* ecx, void* /*edx*/,
     const char* reason, bool bSendReason)
 {
     // Log for debug but DO NOT forward to the real function
-    console->warn(xorstr_("[netc] DisconnectWithReason blocked: %s\n"),
+    console->warning(xorstr_("[netc] DisconnectWithReason blocked: %s\n"),
         reason ? reason : "(null)");
     return;
 }
@@ -248,7 +248,7 @@ bool c_netc::release()
             &h_client_ban, (LPVOID*)&o_client_ban);
 
     // ── send_packet ───────────────────────────────────────────────────────
-    o_send_packet = (send_packet_raw_t)
+    o_send_packet = reinterpret_cast<send_packet_t>
         utilities::c_pattern::find_pattern(
             "netc.dll",
             "\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04"
