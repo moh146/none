@@ -28,7 +28,7 @@ jobs:
       - name: Build solution (Release | Win32)
         shell: powershell
         run: |
-          msbuild "Nebul engine.sln" /p:Configuration=Release /p:Platform=Win32 /m /v:minimal
+          msbuild "Nebul engine.sln" /p:Configuration=Release /p:Platform=x86 /m /v:minimal
 
       - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
