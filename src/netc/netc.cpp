@@ -248,12 +248,12 @@ bool c_netc::release()
             &h_client_ban, (LPVOID*)&o_client_ban);
 
     // ── send_packet ───────────────────────────────────────────────────────
-    o_send_packet = reinterpret_cast<send_packet_t>
+    o_send_packet = reinterpret_cast<send_packet_t>(
         utilities::c_pattern::find_pattern(
             "netc.dll",
             "\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04"
             "\x8B\xEC\x6A\xFF\x68\x05\x0B\x3D",
-            "xxxxxxxxxxxxxxxxxxxxxxxxx?xx");
+            "xxxxxxxxxxxxxxxxxxxxxxxxx?xx"));
     if (o_send_packet)
         MH_CreateAndEnableHook((LPVOID)o_send_packet,
             &h_send_packet, (LPVOID*)&o_send_packet);
